@@ -1,5 +1,6 @@
 var Map = function(element, center, zoom) {
     this.googleMap = new google.maps.Map(element, {center: center, zoom: zoom});
+    this.geocoder = new google.maps.Geocoder();
     this.markers = [];
     this.infowindows = [];
     this.addMarker = function(latLong, text) {
@@ -32,9 +33,11 @@ var Map = function(element, center, zoom) {
         }.bind(this));
     };
 
-    this.findMe = function() {
+    this.findMe = function(getInfo) {
         navigator.geolocation.getCurrentPosition(function(res) {
-            this.addInfoMarker({lat: res.coords.latitude, lng: res.coords.longitude}, "Look it's You!");
+            this.clearMarkers();
+            this.getCountryLocation({lat: res.coords.latitude, lng: res.coords.longitude}, getInfo);
+            // this.addInfoMarker({lat: res.coords.latitude, lng: res.coords.longitude}, "Look it's You!");
         }.bind(this));
     };
 
@@ -42,47 +45,58 @@ var Map = function(element, center, zoom) {
         this.googleMap.panTo(latlng);
     };
 
-    this.getCountryLocation = function(location, genInfo) {
-        var geocoder = new google.maps.Geocoder();
-        // var location = {lat: 5, lng: 5};
-        geocoder.geocode( { 'location': location}, function(results, status) {
-            if (status == google.maps.GeocoderStatus.OK) {
-                var res = results[results.length - 1];
-                console.log(res);
+    this.clearMarkers = function() {
+        for (var i = 0; i < this.markers.length; i++) {
+            this.markers[i].setMap(null);
+        }
+        this.markers = [];
+    };
 
-                this.centerMap(res.geometry.location);
-            //     this.centerMap({lat: latlng[0], lng: latlng[1]});
-                this.googleMap.fitBounds(res.geometry.viewport);
-            //     // console.log(results[0].geometry.viewport);
-            //     this.addInfoMarker({lat: latlng[0], lng: latlng[1]}, infoText, name+" - According to RESTCountries");
-                this.addInfoMarker(results[0].geometry.location, genInfo(res.address_components.short_name), name+" - According to Google");
-            }
+    this.getCountryLocation = function(location, genInfo, name) {
+        // var geocoder = new google.maps.Geocoder();
+        // var location = {lat: 5, lng: 5};
+        this.geocoder.geocode( { 'location': location}, function(results, status) {
+            this.geocodeDisplay(results, status, genInfo, name);
         }.bind(this));
     };
 
-    this.zoomTo = function(name, latlng, infoText) {
-        var geocoder = new google.maps.Geocoder();
-        geocoder.geocode( { 'address': name}, function(results, status) {
-            if (status == google.maps.GeocoderStatus.OK) {
-                // this.centerMap(results[0].geometry.location);
-                this.centerMap({lat: latlng[0], lng: latlng[1]});
-                this.googleMap.fitBounds(results[0].geometry.viewport);
-                // console.log(results[0].geometry.viewport);
-                this.addInfoMarker({lat: latlng[0], lng: latlng[1]}, infoText, name+" - According to RESTCountries");
-                this.addInfoMarker(results[0].geometry.location, infoText, name+" - According to Google");
-            }
+    this.getRegionLocation = function(region) {
+        // var geocoder = new google.maps.Geocoder();
+        // var location = {lat: 5, lng: 5};
+        this.geocoder.geocode( { 'address': region}, function(results, status) {
+            console.log(results);
+            this.geocodeDisplay(results, status);
         }.bind(this));
+    };
+    this.geocodeDisplay = function(results, status, genInfo, name) {
+        if (status == google.maps.GeocoderStatus.OK) {
+            var res = results[results.length - 1];
+
+            this.centerMap(res.geometry.location);
+            // this.centerMap({lat: latlng[0], lng: latlng[1]});
+            this.googleMap.fitBounds(res.geometry.viewport);
+            // console.log(results[0].geometry.viewport);
+            // this.addInfoMarker({lat: latlng[0], lng: latlng[1]}, infoText, name+" - According to RESTCountries");
+            if (genInfo) {
+                if (name) {
+                    this.addInfoMarker(results[0].geometry.location, genInfo, name);
+                } else {
+                    this.addInfoMarker(results[0].geometry.location, genInfo(res.address_components[0].short_name), res.address_components[0].long_name);
+                }
+            }
+
+        }
+    }.bind(this);
+
+    this.zoomTo = function(name, latlng, infoText) {
+        this.getCountryLocation({lat: latlng[0], lng: latlng[1]}, infoText, name);
     };
 
 
     this.bindClick = function(genInfo) {
         google.maps.event.addListener(this.googleMap, 'click', function(e) {
-            console.log("I got clicked");
-            console.log("lat:", e.latLng.lat());
-            console.log("lng:", e.latLng.lng());
+            this.clearMarkers();
             this.getCountryLocation({lat: e.latLng.lat(), lng: e.latLng.lng()}, genInfo);
         }.bind(this));
     };
-
-    // this.bindClick();
 };

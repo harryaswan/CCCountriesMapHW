@@ -12,8 +12,9 @@ var CountryApp = function() {
             this.populateRegion(this.countryData);
             this.createSelect(this.countryData);
         } else {
-            this.grabData([this.populateRegion , this.createSelect]);
+            this.grabData();
         }
+
         var item = localStorage.getItem('lastCountry');
         if (item) {
             this.viewCountry(this.grabCountry(item), true);
@@ -21,21 +22,27 @@ var CountryApp = function() {
 
         this.map.bindClick(this.generateInfoWindowText);
 
+        document.getElementById('find_me').onclick = function() {
+            this.map.findMe(this.generateInfoWindowText);
+        }.bind(this);
+
     };
 
     this.generateInfoWindowText = function(code) {
+        console.log("Code", code);
         var country = this.grabCountry(code);
+        console.log("country", country);
         var sCountry = document.createElement('span');
 
         var img = document.createElement('img');
 
-        img.setAttribute("class", "flag flag-" + country.alpha2Code.toLowerCase());
+        // img.setAttribute("class", "flag flag-" + country.alpha2Code.toLowerCase());
 
-        // img.setAttribute('src', "http://www.geonames.org/flags/x/"+country.alpha2Code.toLowerCase()+".gif");
-        // // img.style.height = "20px";
-        // img.style.display = "block";
-        // img.style.width = "30px";
-        // img.style.margin = "auto";
+        img.setAttribute('src', "http://www.geonames.org/flags/x/"+country.alpha2Code.toLowerCase()+".gif");
+        // img.style.height = "20px";
+        img.style.display = "block";
+        img.style.width = "30px";
+        img.style.margin = "auto";
         var countryName = this.getCountyProperty(country, 'name');
         countryName.style.textAlign = "center";
 
@@ -45,7 +52,7 @@ var CountryApp = function() {
         sCountry.appendChild(this.getCountyProperty(country, 'capital', "Capital:", true));
 
         return sCountry;
-    };
+    }.bind(this);
 
     this.createSelect = function(data) {
         var parent = document.getElementById('select-country');
@@ -165,6 +172,7 @@ var CountryApp = function() {
             var me = e.target;
             this.populateSubRegion(me.value);
             this.grabCountryRegions(me.value, false);
+            this.map.getRegionLocation(me.value);
         }.bind(this);
 
         for (i = 0; i < regions.length; i++) {
@@ -191,6 +199,7 @@ var CountryApp = function() {
         subRegionSelect.onchange = function(e) {
             var me = e.target;
             this.grabCountryRegions(me.value, true);
+            // this.map.getRegionLocation(me.value);
         }.bind(this);
 
         var subregions = this.grabSubRegions(region);
