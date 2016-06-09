@@ -3,53 +3,16 @@ var Map = function(element, center, zoom) {
     this.markers = [];
     this.infowindows = [];
     this.addMarker = function(latLong, text) {
-        // var goldStar = {
-        //     path: 'M 125,5 155,90 245,90 175,145 200,230 125,180 50,230 75,145 5,90 95,90 z',
-        //     fillColor: 'yellow',
-        //     fillOpacity: 0.8,
-        //     scale: 0.05,
-        //     strokeColor: 'gold',
-        //     strokeWeight: 1
-        // };
-        var icon = {
-          url: "hand.png",
-          size: new google.maps.Size(30, 30),
-          origin: new google.maps.Point(0, 0),
-          anchor: new google.maps.Point(10, 20),
-          scaledSize: new google.maps.Size(25, 25)
-        };
         var marker = new google.maps.Marker({
             position: latLong,
             map: this.googleMap,
             draggable: true,
-            icon: icon,
-            // icon: {path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW, scale:5},
-            // icon: "https://maps.google.com/mapfiles/kml/shapes/schools_maps.png",
-            // icon: "https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png",
+            // icon: icon,
             animation: google.maps.Animation.DROP,
             title: text
         });
-
-        // marker.addListener('mouseover', function() {
-        //     if (this.getAnimation() === null) {
-        //         this.setAnimation(google.maps.Animation.BOUNCE);
-        //     }
-        // });
-        // marker.addListener('mouseout', function(e) {
-        //     this.setAnimation(null);
-        // }); // < --- works just annoying after a while
-
         this.markers.push(marker);
         return marker;
-    };
-    this.addMe = function() {
-        navigator.geolocation.getCurrentPosition(function(res) {
-            // var m = this.addMarker({lat: res.coords.latitude, lng: res.coords.longitude}, null);
-            // var i = this.addInfoWindow("This is you!");
-            // i.open(this.googleMap, m);
-            this.addInfoMarker({lat: res.coords.latitude, lng: res.coords.longitude}, "Look it's You!");
-
-        }.bind(this));
     };
     this.addInfoWindow = function(text) {
         var infowindow = new google.maps.InfoWindow({
@@ -58,28 +21,68 @@ var Map = function(element, center, zoom) {
         this.infowindows.push(infowindow);
         return infowindow;
     };
-
-    this.addInfoMarker = function(latLng, text) {
+    this.addInfoMarker = function(latLng, infoText, text) {
         var marker = this.addMarker(latLng, text);
-        var infoWindow = this.addInfoWindow(text);
+        var infoWindow = this.addInfoWindow(infoText);
         marker.addListener('click', function() {
-
-            infoWindow.open(this.googleMap, marker);
-        }.bind(this));
-
-        infoWindow.addListener('closeclick', function() {
-            console.log("ASdasd");
-            console.log(infoWindow.getPosition());
-            infoWindow.open(this.googleMap, marker);
+            for (var i = 0; i < this.infowindows.length; i++) {
+                this.infowindows[i].close();
+            }
+            infoWindow.open(marker.map, marker);
         }.bind(this));
     };
 
-    this.bindClick = function() {
+    this.findMe = function() {
+        navigator.geolocation.getCurrentPosition(function(res) {
+            this.addInfoMarker({lat: res.coords.latitude, lng: res.coords.longitude}, "Look it's You!");
+        }.bind(this));
+    };
+
+    this.centerMap = function(latlng) {
+        this.googleMap.panTo(latlng);
+    };
+
+    this.getCountryLocation = function(location, genInfo) {
+        var geocoder = new google.maps.Geocoder();
+        // var location = {lat: 5, lng: 5};
+        geocoder.geocode( { 'location': location}, function(results, status) {
+            if (status == google.maps.GeocoderStatus.OK) {
+                var res = results[results.length - 1];
+                console.log(res);
+
+                this.centerMap(res.geometry.location);
+            //     this.centerMap({lat: latlng[0], lng: latlng[1]});
+                this.googleMap.fitBounds(res.geometry.viewport);
+            //     // console.log(results[0].geometry.viewport);
+            //     this.addInfoMarker({lat: latlng[0], lng: latlng[1]}, infoText, name+" - According to RESTCountries");
+                this.addInfoMarker(results[0].geometry.location, genInfo(res.address_components.short_name), name+" - According to Google");
+            }
+        }.bind(this));
+    };
+
+    this.zoomTo = function(name, latlng, infoText) {
+        var geocoder = new google.maps.Geocoder();
+        geocoder.geocode( { 'address': name}, function(results, status) {
+            if (status == google.maps.GeocoderStatus.OK) {
+                // this.centerMap(results[0].geometry.location);
+                this.centerMap({lat: latlng[0], lng: latlng[1]});
+                this.googleMap.fitBounds(results[0].geometry.viewport);
+                // console.log(results[0].geometry.viewport);
+                this.addInfoMarker({lat: latlng[0], lng: latlng[1]}, infoText, name+" - According to RESTCountries");
+                this.addInfoMarker(results[0].geometry.location, infoText, name+" - According to Google");
+            }
+        }.bind(this));
+    };
+
+
+    this.bindClick = function(genInfo) {
         google.maps.event.addListener(this.googleMap, 'click', function(e) {
             console.log("I got clicked");
             console.log("lat:", e.latLng.lat());
             console.log("lng:", e.latLng.lng());
-            this.addMarker({lat: e.latLng.lat(), lng: e.latLng.lng()});
+            this.getCountryLocation({lat: e.latLng.lat(), lng: e.latLng.lng()}, genInfo);
         }.bind(this));
     };
+
+    // this.bindClick();
 };

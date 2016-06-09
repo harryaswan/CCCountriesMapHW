@@ -2,7 +2,10 @@
 <html>
   <head>
     <title>Country App</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDVpBTSK64dTIkoUwxIYPa_dsNsWmHwa38"></script>
     <script src='app.js'></script>
+    <script src='map.js'></script>
+    <link rel="stylesheet" href="main.css" media="screen" title="no title" charset="utf-8">
   </head>
   <body>
     <h1>Countries</h1>
@@ -10,8 +13,11 @@
         <select id='region_select'><option>Loading...</option></select>
         <select id='subregion_select'><option>&lt;Select A Region&gt;</option></select>
         <h3 id='country_select'>Loading Countries.....</h3>
+        <button id="find_me">Find My Country</button>
     </form>
-    <ul id='country-list'>
-    </ul>
+    <div id='country-list'>
+        <span></span>
+        <div id="map"></div>
+    </div>
   </body>
 </html>
