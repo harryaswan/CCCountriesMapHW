@@ -29,9 +29,7 @@ var CountryApp = function() {
     };
 
     this.generateInfoWindowText = function(code) {
-        console.log("Code", code);
         var country = this.grabCountry(code);
-        console.log("country", country);
         var sCountry = document.createElement('span');
 
         var img = document.createElement('img');
@@ -228,7 +226,6 @@ var CountryApp = function() {
                 var jsonString = request.responseText;
                 localStorage.setItem('data', jsonString);
                 this.countryData = JSON.parse(jsonString);
-                console.log(this);
                 this.populateRegion(this.countryData);
                 this.createSelect(this.countryData);
                 // if (arguments.length > 0) {

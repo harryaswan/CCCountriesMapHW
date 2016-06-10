@@ -64,7 +64,6 @@ var Map = function(element, center, zoom) {
         // var geocoder = new google.maps.Geocoder();
         // var location = {lat: 5, lng: 5};
         this.geocoder.geocode( { 'address': region}, function(results, status) {
-            console.log(results);
             this.geocodeDisplay(results, status);
         }.bind(this));
     };
